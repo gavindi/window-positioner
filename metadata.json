@@ -1,0 +1,9 @@
+{
+  "uuid": "window-positioner@gavindi.github.com",
+  "name": "Window Positioner",
+  "description": "Remembers and restores window positions",
+  "version": 1,
+  "shell-version": ["48"],
+  "url": "https://github.com/gavindi/window-positioner"
+}
+
