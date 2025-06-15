@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="gnome-shell-extensions">
+  <schema id="org.gnome.shell.extensions.window-positioner" path="/org/gnome/shell/extensions/window-positioner/">
+    
+    <key name="window-positions" type="a{s(iiii)}">
+      <default>{}</default>
+      <summary>Window positions and sizes</summary>
+      <description>Stores window positions and sizes as a dictionary mapping window keys to (x, y, width, height) tuples</description>
+    </key>
+    
+    <key name="window-monitors" type="a{si}">
+      <default>{}</default>
+      <summary>Window monitor assignments</summary>
+      <description>Stores which monitor each window was on</description>
+    </key>
+    
+    <key name="window-timestamps" type="a{sx}">
+      <default>{}</default>
+      <summary>Window save timestamps</summary>
+      <description>Stores when each window position was last saved (for cleanup)</description>
+    </key>
+    
+    <key name="restore-delay-ms" type="i">
+      <default>100</default>
+      <range min="0" max="2000"/>
+      <summary>Restore delay in milliseconds</summary>
+      <description>Delay before attempting to restore window position</description>
+    </key>
+    
+    <key name="max-restore-attempts" type="i">
+      <default>3</default>
+      <range min="1" max="10"/>
+      <summary>Maximum restore attempts</summary>
+      <description>Number of times to attempt restoring window position</description>
+    </key>
+    
+    <key name="cleanup-days" type="i">
+      <default>30</default>
+      <range min="1" max="365"/>
+      <summary>Cleanup old entries after days</summary>
+      <description>Remove window position data older than this many days</description>
+    </key>
+    
+    <key name="debug-logging" type="b">
+      <default>false</default>
+      <summary>Enable debug logging</summary>
+      <description>Enable detailed logging for troubleshooting</description>
+    </key>
+    
+  </schema>
+</schemalist>

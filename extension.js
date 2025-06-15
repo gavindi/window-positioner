@@ -7,7 +7,9 @@ import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 export default class WindowPositionerExtension extends Extension {
     enable() {
         this._settings = {};
-        this._windowTracker = Shell.WindowTracker.get_default();  // Corrected window tracker
+        this._windowTracker = Shell.WindowTracker.get_default();
+        this._windowConnections = new Map(); // Track connections per window
+        
         this.WINDOW_DATA_FILE = GLib.build_filenamev([
             GLib.get_user_data_dir(),
             'gnome-shell',
@@ -43,9 +45,23 @@ export default class WindowPositionerExtension extends Extension {
     }
 
     disable() {
-        // Disconnect signals
-        global.display.disconnect(this._windowCreatedId);
-        global.workspace_manager.disconnect(this._windowClosedId);
+        // Disconnect all signals
+        if (this._windowCreatedId) {
+            global.display.disconnect(this._windowCreatedId);
+            this._windowCreatedId = null;
+        }
+        if (this._windowClosedId) {
+            global.workspace_manager.disconnect(this._windowClosedId);
+            this._windowClosedId = null;
+        }
+        
+        // Disconnect all window-specific connections
+        for (const [window, connections] of this._windowConnections) {
+            for (const connectionId of connections) {
+                window.disconnect(connectionId);
+            }
+        }
+        this._windowConnections.clear();
         
         // Save settings and clean up
         this._saveSettings();
@@ -79,84 +95,167 @@ export default class WindowPositionerExtension extends Extension {
         }
     }
 
+    _getWindowKey(window) {
+        const app = this._windowTracker.get_window_app(window);
+        if (!app) return null;
+        
+        const appId = app.get_id();
+        const title = window.get_title() || 'unknown';
+        
+        // Use just app ID for better matching if title is generic
+        if (title === 'unknown' || title === '' || title === appId) {
+            return appId;
+        }
+        
+        return `${appId}-${title}`;
+    }
+
     _onWindowCreated(display, window) {
         if (window.get_window_type() !== Meta.WindowType.NORMAL) return;
         
-        const app = this._windowTracker.get_window_app(window);
-        if (!app) return;
+        // Connect to window destruction immediately
+        const destroyId = window.connect('unmanaging', () => {
+            this._saveWindowPosition(window);
+            this._cleanupWindowConnections(window);
+        });
         
-        const appId = app.get_id();
-        const winKey = `${appId}-${window.title}`;
+        // Also connect to notify::title in case title changes
+        const titleId = window.connect('notify::title', () => {
+            this._tryRestorePosition(window);
+        });
         
-        if (this._settings[winKey]) {
-            const saved = this._settings[winKey];
-            const monitors = global.display.get_monitors();
-            
-            // Find appropriate monitor
-            let monitor = null;
-            if (saved.monitor < monitors.length) {
-                monitor = monitors[saved.monitor];
-            } else {
-                // Fallback to primary or first monitor
-                monitor = monitors.find(m => m.is_primary()) || monitors[0];
+        this._windowConnections.set(window, [destroyId, titleId]);
+        
+        // Try to restore position with multiple attempts
+        this._tryRestorePosition(window);
+    }
+
+    _tryRestorePosition(window) {
+        // Try immediately
+        this._restoreWindowPosition(window);
+        
+        // Try again after 100ms in case title wasn't ready
+        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, () => {
+            if (!window.is_destroyed()) {
+                this._restoreWindowPosition(window);
             }
-            
-            // Adjust position to fit current monitor
-            const workArea = monitor.get_work_area();
-            let [x, y] = saved.position;
-            let [width, height] = saved.size;
-            
-            // Constrain to monitor boundaries
-            width = Math.min(width, workArea.width);
-            height = Math.min(height, workArea.height);
-            x = Math.max(workArea.x, Math.min(x, workArea.x + workArea.width - width));
-            y = Math.max(workArea.y, Math.min(y, workArea.y + workArea.height - height));
-            
-            // Apply with delay for better compatibility
-            GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, () => {
-                if (window.is_destroyed()) return GLib.SOURCE_REMOVE;
-                
-                window.unmaximize(Meta.MaximizeFlags.BOTH);
-                window.move_resize_frame(true, x, y, width, height);
-                return GLib.SOURCE_REMOVE;
-            });
+            return GLib.SOURCE_REMOVE;
+        });
+        
+        // Final attempt after 300ms for slow applications
+        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
+            if (!window.is_destroyed()) {
+                this._restoreWindowPosition(window);
+            }
+            return GLib.SOURCE_REMOVE;
+        });
+    }
+
+    _restoreWindowPosition(window) {
+        const winKey = this._getWindowKey(window);
+        if (!winKey || !this._settings[winKey]) return;
+        
+        const saved = this._settings[winKey];
+        
+        // Get current monitor setup
+        const display = global.display;
+        const nMonitors = display.get_n_monitors();
+        
+        // Validate saved monitor index
+        let monitorIndex = saved.monitor;
+        if (monitorIndex >= nMonitors) {
+            monitorIndex = display.get_primary_monitor();
         }
         
-        // Connect to window destruction
-        this._windowDestroyId = window.connect('destroy', () => {
-            this._saveWindowPosition(window);
-        });
+        // Get monitor geometry
+        const monitorGeometry = display.get_monitor_geometry(monitorIndex);
+        const workArea = display.get_monitor_work_area(monitorIndex);
+        
+        let [x, y] = saved.position;
+        let [width, height] = saved.size;
+        
+        // Ensure minimum size
+        width = Math.max(width, 100);
+        height = Math.max(height, 100);
+        
+        // Constrain to work area (accounts for panels, docks, etc.)
+        width = Math.min(width, workArea.width);
+        height = Math.min(height, workArea.height);
+        
+        // Adjust position to ensure window is visible
+        x = Math.max(workArea.x, Math.min(x, workArea.x + workArea.width - width));
+        y = Math.max(workArea.y, Math.min(y, workArea.y + workArea.height - height));
+        
+        // Apply the position
+        try {
+            if (window.get_maximized() !== Meta.MaximizeFlags.NONE) {
+                window.unmaximize(Meta.MaximizeFlags.BOTH);
+            }
+            
+            // Use move_resize_frame for better reliability
+            window.move_resize_frame(false, x, y, width, height);
+            
+            console.log(`[Window Positioner] Restored ${winKey} to ${x},${y} ${width}x${height}`);
+        } catch (e) {
+            console.error(`[Window Positioner] Failed to restore window position: ${e}`);
+        }
     }
 
     _saveWindowPosition(window) {
         if (window.get_window_type() !== Meta.WindowType.NORMAL) return;
-        if (window.maximized_horizontally || window.maximized_vertically) return;
+        if (window.get_maximized() !== Meta.MaximizeFlags.NONE) return;
         
-        const app = this._windowTracker.get_window_app(window);
-        if (!app) return;
+        const winKey = this._getWindowKey(window);
+        if (!winKey) return;
         
-        const appId = app.get_id();
-        const winKey = `${appId}-${window.title}`;
-        
-        // Save window geometry
-        const rect = window.get_frame_rect();
-        this._settings[winKey] = {
-            position: [rect.x, rect.y],
-            size: [rect.width, rect.height],
-            monitor: window.get_monitor()
-        };
-        
-        this._saveSettings();
+        try {
+            // Get window geometry
+            const rect = window.get_frame_rect();
+            const monitorIndex = window.get_monitor();
+            
+            // Don't save if window is too small (likely minimized or in weird state)
+            if (rect.width < 50 || rect.height < 50) return;
+            
+            this._settings[winKey] = {
+                position: [rect.x, rect.y],
+                size: [rect.width, rect.height],
+                monitor: monitorIndex,
+                timestamp: Date.now() // For potential cleanup of old entries
+            };
+            
+            this._saveSettings();
+            console.log(`[Window Positioner] Saved ${winKey} at ${rect.x},${rect.y} ${rect.width}x${rect.height}`);
+        } catch (e) {
+            console.error(`[Window Positioner] Failed to save window position: ${e}`);
+        }
+    }
+
+    _cleanupWindowConnections(window) {
+        const connections = this._windowConnections.get(window);
+        if (connections) {
+            for (const connectionId of connections) {
+                try {
+                    window.disconnect(connectionId);
+                } catch (e) {
+                    // Window might already be destroyed
+                }
+            }
+            this._windowConnections.delete(window);
+        }
     }
 
     _saveAllWindows() {
         // Save all tracked windows when workspace changes
-        const windows = global.get_window_actors()
-            .map(actor => actor.meta_window)
-            .filter(window => window.get_window_type() === Meta.WindowType.NORMAL);
-            
-        for (const window of windows) {
-            this._saveWindowPosition(window);
+        try {
+            const windows = global.get_window_actors()
+                .map(actor => actor.meta_window)
+                .filter(window => window && window.get_window_type() === Meta.WindowType.NORMAL);
+                
+            for (const window of windows) {
+                this._saveWindowPosition(window);
+            }
+        } catch (e) {
+            console.error(`[Window Positioner] Error saving all windows: ${e}`);
         }
     }
 }
