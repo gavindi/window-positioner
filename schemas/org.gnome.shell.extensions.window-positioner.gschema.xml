@@ -21,15 +21,15 @@
     </key>
     
     <key name="restore-delay-ms" type="i">
-      <default>100</default>
-      <range min="0" max="2000"/>
+      <default>200</default>
+      <range min="50" max="2000"/>
       <summary>Restore delay in milliseconds</summary>
       <description>Delay before attempting to restore window position</description>
     </key>
     
     <key name="max-restore-attempts" type="i">
-      <default>3</default>
-      <range min="1" max="10"/>
+      <default>5</default>
+      <range min="1" max="15"/>
       <summary>Maximum restore attempts</summary>
       <description>Number of times to attempt restoring window position</description>
     </key>
@@ -45,6 +45,19 @@
       <default>false</default>
       <summary>Enable debug logging</summary>
       <description>Enable detailed logging for troubleshooting</description>
+    </key>
+    
+    <key name="aggressive-positioning" type="b">
+      <default>true</default>
+      <summary>Use aggressive positioning</summary>
+      <description>Use multiple methods to force window positioning, overriding GNOME's window management</description>
+    </key>
+    
+    <key name="position-tolerance" type="i">
+      <default>5</default>
+      <range min="0" max="50"/>
+      <summary>Position tolerance in pixels</summary>
+      <description>How close the window position needs to be to consider it correctly positioned</description>
     </key>
     
   </schema>
