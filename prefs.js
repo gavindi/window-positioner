@@ -28,7 +28,7 @@ export default class WindowPositionerPreferences extends ExtensionPreferences {
             title: 'Restore Delay',
             subtitle: 'Delay in milliseconds before attempting to restore window position',
             adjustment: new Gtk.Adjustment({
-                lower: 0,
+                lower: 1,
                 upper: 2000,
                 step_increment: 50,
                 page_increment: 100,

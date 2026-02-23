@@ -21,8 +21,8 @@
     </key>
     
     <key name="restore-delay-ms" type="i">
-      <default>200</default>
-      <range min="50" max="2000"/>
+      <default>1</default>
+      <range min="1" max="2000"/>
       <summary>Restore delay in milliseconds</summary>
       <description>Delay before attempting to restore window position</description>
     </key>
