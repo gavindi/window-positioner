@@ -69,7 +69,7 @@ gnome-extensions prefs window-positioner@gavindi.github.com
 
 | Setting | Default | Description |
 |---|---|---|
-| Restore Delay | 200 ms | How long to wait after a window opens before attempting to restore its position. Increase this for applications that move themselves during startup. |
+| Restore Delay | 1 ms | How long to wait after a window opens before attempting to restore its position. Increase this for applications that move themselves during startup. |
 | Maximum Restore Attempts | 5 | How many times to retry restoring a position if the first attempt fails. |
 | Cleanup After Days | 30 | Position data for applications not seen within this many days is automatically removed. |
 | Debug Logging | Off | Logs save and restore events to the GNOME Shell journal for troubleshooting. |
