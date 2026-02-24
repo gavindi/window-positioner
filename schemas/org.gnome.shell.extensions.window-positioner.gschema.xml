@@ -46,13 +46,7 @@
       <summary>Enable debug logging</summary>
       <description>Enable detailed logging for troubleshooting</description>
     </key>
-    
-    <key name="aggressive-positioning" type="b">
-      <default>true</default>
-      <summary>Use aggressive positioning</summary>
-      <description>Use multiple methods to force window positioning, overriding GNOME's window management</description>
-    </key>
-    
+
     <key name="position-tolerance" type="i">
       <default>5</default>
       <range min="0" max="50"/>

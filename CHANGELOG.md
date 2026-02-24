@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1] - 2026-02-25
+
+### Fixed
+- `saveTimeout` GLib source now properly removed in `disable()`, preventing a leaked main loop source and a runtime error if a window was moved within 500 ms of disabling the extension
+- Replaced deprecated `Adw.MessageDialog` with `Adw.AlertDialog` in preferences (requires GNOME 47+ / libadwaita 1.5)
+
+### Changed
+- `max-restore-attempts` spinner upper bound raised from 10 to 15, matching the schema maximum
+
+### Added
+- Position Tolerance setting exposed in preferences UI (was previously schema-only and silently inaccessible)
+
+### Removed
+- Unused `aggressive-positioning` GSettings schema key
+
 ## [1.0] - 2026-02-24
 
 ### Changed

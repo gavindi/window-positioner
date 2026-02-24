@@ -43,13 +43,27 @@ export default class WindowPositionerPreferences extends ExtensionPreferences {
             subtitle: 'Number of times to attempt restoring window position',
             adjustment: new Gtk.Adjustment({
                 lower: 1,
-                upper: 10,
+                upper: 15,
                 step_increment: 1,
                 page_increment: 1,
             }),
         });
         settings.bind('max-restore-attempts', attemptsRow, 'value', Gio.SettingsBindFlags.DEFAULT);
         behaviorGroup.add(attemptsRow);
+
+        // Position tolerance setting
+        const toleranceRow = new Adw.SpinRow({
+            title: 'Position Tolerance',
+            subtitle: 'Pixels of tolerance before forcing a window move (0 = always move)',
+            adjustment: new Gtk.Adjustment({
+                lower: 0,
+                upper: 50,
+                step_increment: 1,
+                page_increment: 5,
+            }),
+        });
+        settings.bind('position-tolerance', toleranceRow, 'value', Gio.SettingsBindFlags.DEFAULT);
+        behaviorGroup.add(toleranceRow);
 
         // Maintenance group
         const maintenanceGroup = new Adw.PreferencesGroup({
@@ -160,9 +174,7 @@ export default class WindowPositionerPreferences extends ExtensionPreferences {
     }
 
     _showClearDialog(parent, settings, callback) {
-        const dialog = new Adw.MessageDialog({
-            transient_for: parent,
-            modal: true,
+        const dialog = new Adw.AlertDialog({
             heading: 'Clear All Window Positions?',
             body: 'This will permanently delete all saved window positions. This action cannot be undone.',
         });
@@ -172,19 +184,17 @@ export default class WindowPositionerPreferences extends ExtensionPreferences {
         dialog.set_response_appearance('clear', Adw.ResponseAppearance.DESTRUCTIVE);
         dialog.set_default_response('cancel');
 
-        dialog.connect('response', (dialog, response) => {
+        dialog.connect('response', (_dialog, response) => {
             if (response === 'clear') {
-                // Clear all data
                 settings.set_value('window-positions', new GLib.Variant('a{s(iiii)}', {}));
                 settings.set_value('window-monitors', new GLib.Variant('a{si}', {}));
                 settings.set_value('window-timestamps', new GLib.Variant('a{sx}', {}));
-                
+
                 if (callback) callback();
             }
-            dialog.destroy();
         });
 
-        dialog.present();
+        dialog.present(parent);
     }
 
     _cleanupOldEntries(settings) {

@@ -1,3 +1,4 @@
 *.code-workspace
 /build/
 schemas/gschemas.compiled
+NOTES.md

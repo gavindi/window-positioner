@@ -2,7 +2,7 @@
   "uuid": "window-positioner@gavindi.github.com",
   "name": "Window Positioner",
   "description": "Remembers and restores window positions using GSettings",
-  "version": 1,
+  "version": 2,
   "shell-version": ["46", "47", "48", "49", "50"],
   "url": "https://github.com/gavindi/window-positioner",
   "settings-schema": "org.gnome.shell.extensions.window-positioner"

@@ -50,6 +50,10 @@ export default class WindowPositionerExtension extends Extension {
         this._pendingRestores.clear();
 
         for (const [window, connections] of this._windowConnections) {
+            if (connections.saveTimeout) {
+                GLib.source_remove(connections.saveTimeout);
+                connections.saveTimeout = null;
+            }
             for (const connectionId of connections) {
                 try {
                     window.disconnect(connectionId);
