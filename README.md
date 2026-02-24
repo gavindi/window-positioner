@@ -1,6 +1,10 @@
-# Window Positioner
+<img src="https://github.com/gavindi/window-positioner/blob/master/icons/Window%20Positioner%201.png?raw=true" alt="title" width="5%">
+
+# Window Positioner - Gnome Extension
 
 A GNOME Shell extension that remembers and restores the position and size of application windows. When a tracked application is opened, it is automatically moved back to where it was last seen.
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/P5P21M7MBS)
 
 ## Features
 
