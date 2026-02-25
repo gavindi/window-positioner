@@ -6,6 +6,8 @@ A GNOME Shell extension that remembers and restores the position and size of app
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/P5P21M7MBS)
 
+[![GitHub](https://img.shields.io/badge/GitHub-gavindi%2Fwindow--positioner-24292e?logo=github&logoColor=white)](https://github.com/gavindi/window-positioner)
+
 ## Features
 
 - Saves window position, size, and monitor assignment per application
