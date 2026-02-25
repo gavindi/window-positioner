@@ -18,7 +18,7 @@ A GNOME Shell extension that remembers and restores the position and size of app
 
 ## Requirements
 
-- GNOME Shell 46, 47, 48, 49, or 50
+- GNOME Shell 47, 48, 49, or 50
 
 ## Installation
 
