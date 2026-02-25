@@ -22,7 +22,7 @@ $(BUILD_DIR)/$(EXTENSION_UUID).zip: extension.js prefs.js metadata.json README.m
 	cp extension.js prefs.js metadata.json README.md CHANGELOG.md $(BUILD_DIR)/$(EXTENSION_UUID)/
 	cp -r $(SCHEMA_DIR) $(BUILD_DIR)/$(EXTENSION_UUID)/
 	glib-compile-schemas $(BUILD_DIR)/$(EXTENSION_UUID)/$(SCHEMA_DIR)
-	cd $(BUILD_DIR) && zip -r $(EXTENSION_UUID).zip $(EXTENSION_UUID)/
+	cd $(BUILD_DIR)/$(EXTENSION_UUID) && zip -r ../$(EXTENSION_UUID).zip .
 	rm -rf $(BUILD_DIR)/$(EXTENSION_UUID)
 
 install: $(BUILD_DIR)/$(EXTENSION_UUID).zip
